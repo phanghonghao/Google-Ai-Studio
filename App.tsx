@@ -1,16 +1,18 @@
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState } from 'react';
 import { CalculatorMode, CalculationHistory, Operation } from './types';
-import { getSmartExplanation, solveWordProblem } from './services/geminiService';
+import { solveWordProblem } from './services/geminiService';
 import { 
   History, 
   Trash2, 
   Sparkles, 
-  Settings, 
   ChevronLeft, 
   BrainCircuit, 
   MessageSquare,
-  RefreshCw
+  RefreshCw,
+  Battery,
+  Wifi,
+  Signal
 } from 'lucide-react';
 
 const App: React.FC = () => {
@@ -40,7 +42,11 @@ const App: React.FC = () => {
       setDisplay(num);
       setIsNewNumber(false);
     } else {
-      setDisplay(display === '0' ? num : display + num);
+      if (display === '0' && num !== '.') {
+        setDisplay(num);
+      } else {
+        setDisplay(display + num);
+      }
     }
   };
 
@@ -64,7 +70,7 @@ const App: React.FC = () => {
       case '-': return a - b;
       case '*': return a * b;
       case '/': return b !== 0 ? a / b : 0;
-      case '%': return a % b;
+      case '%': return (a / 100) * b;
       default: return b;
     }
   };
@@ -106,7 +112,7 @@ const App: React.FC = () => {
       };
       setHistory(prev => [newHistory, ...prev].slice(0, 50));
     } catch (error) {
-      alert("Failed to solve word problem. Check your prompt or API key.");
+      alert("Failed to solve word problem. Check your API key.");
     } finally {
       setIsSolving(false);
     }
@@ -118,48 +124,51 @@ const App: React.FC = () => {
   };
 
   return (
-    <div className="flex items-center justify-center h-screen bg-slate-950 p-4">
-      {/* Phone Frame */}
-      <div className="relative w-full max-w-[400px] h-[85vh] bg-black rounded-[3rem] border-[8px] border-slate-800 shadow-2xl overflow-hidden flex flex-col">
+    <div className="flex items-center justify-center h-screen bg-mesh p-4 transition-all duration-700">
+      {/* iPhone Frame */}
+      <div className="relative w-full max-w-[390px] h-[844px] bg-black rounded-[55px] border-[12px] border-[#1a1a1a] shadow-[0_0_80px_rgba(0,0,0,0.6)] overflow-hidden flex flex-col ring-2 ring-white/5">
         
+        {/* Dynamic Island */}
+        <div className="absolute top-2 left-1/2 -translate-x-1/2 w-32 h-9 bg-black rounded-full z-50 flex items-center justify-center overflow-hidden">
+          <div className="w-4 h-4 rounded-full bg-blue-500/20 blur-sm"></div>
+        </div>
+
         {/* Status Bar */}
-        <div className="h-10 flex items-center justify-between px-8 pt-4 pb-2 bg-black/80 z-20">
-          <span className="text-xs font-medium">9:41</span>
-          <div className="flex gap-1.5 items-center">
-            <div className="w-4 h-2 bg-white/40 rounded-full"></div>
-            <div className="w-2 h-2 bg-white/40 rounded-full"></div>
-            <div className="w-5 h-3 border border-white/40 rounded-sm"></div>
+        <div className="h-14 flex items-end justify-between px-10 pb-2 bg-transparent z-20">
+          <span className="text-[15px] font-semibold text-white tracking-tight">9:41</span>
+          <div className="flex gap-1.5 items-center text-white">
+            <Signal className="w-4 h-4" />
+            <Wifi className="w-4 h-4" />
+            <Battery className="w-5 h-5" />
           </div>
         </div>
 
         {/* Top Navigation */}
-        <div className="flex items-center justify-between px-6 py-4 z-20">
+        <div className="flex items-center justify-between px-6 py-2 z-20">
           <button 
             onClick={() => setShowHistory(!showHistory)}
-            className="p-2 hover:bg-white/10 rounded-full transition-colors"
+            className="p-3 bg-white/5 hover:bg-white/10 rounded-full transition-colors"
           >
-            {showHistory ? <ChevronLeft className="w-6 h-6" /> : <History className="w-6 h-6 text-slate-400" />}
+            {showHistory ? <ChevronLeft className="w-6 h-6" /> : <History className="w-5 h-5 text-slate-300" />}
           </button>
-          <div className="flex items-center gap-2 bg-white/5 px-3 py-1 rounded-full border border-white/10">
-            <Sparkles className={`w-4 h-4 ${mode === CalculatorMode.SMART ? 'text-blue-400' : 'text-slate-500'}`} />
-            <span className="text-xs font-medium uppercase tracking-widest">
-              {mode === CalculatorMode.SMART ? 'Smart AI' : 'Standard'}
-            </span>
-          </div>
+          
           <button 
             onClick={toggleMode}
-            className={`p-2 rounded-full transition-all ${mode === CalculatorMode.SMART ? 'bg-blue-500 text-white shadow-lg shadow-blue-500/20' : 'bg-white/10 text-slate-400'}`}
+            className={`flex items-center gap-2 px-4 py-2 rounded-full transition-all duration-300 ${mode === CalculatorMode.SMART ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/30' : 'bg-white/10 text-slate-300'}`}
           >
-            <BrainCircuit className="w-6 h-6" />
+            {mode === CalculatorMode.SMART ? <Sparkles className="w-4 h-4" /> : <BrainCircuit className="w-4 h-4" />}
+            <span className="text-xs font-bold uppercase tracking-wider">
+              {mode === CalculatorMode.SMART ? 'AI Mode' : 'Standard'}
+            </span>
           </button>
         </div>
 
         {/* Display Area */}
-        <div className="flex-1 flex flex-col justify-end px-8 py-4 relative">
-          {showHistory ? (
-            <div className="absolute inset-0 bg-black/95 z-30 p-6 overflow-y-auto no-scrollbar animate-in slide-in-from-left duration-300">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-bold">History</h2>
+        <div className="flex-1 flex flex-col justify-end px-8 py-6 relative">
+          {showHistory && (
+            <div className="absolute inset-0 bg-black/95 z-30 p-8 overflow-y-auto no-scrollbar animate-in fade-in slide-in-from-left duration-300 rounded-[43px]">
+              <div className="flex items-center justify-between mb-8 mt-4">
+                <h2 className="text-2xl font-bold">History</h2>
                 <button 
                   onClick={() => setHistory([])}
                   className="text-slate-500 hover:text-red-400 transition-colors"
@@ -168,20 +177,21 @@ const App: React.FC = () => {
                 </button>
               </div>
               {history.length === 0 ? (
-                <div className="flex flex-col items-center justify-center h-2/3 text-slate-600">
-                  <History className="w-12 h-12 mb-2 opacity-20" />
-                  <p>No recent calculations</p>
+                <div className="flex flex-col items-center justify-center h-2/3 text-slate-700">
+                  <History className="w-16 h-16 mb-4 opacity-10" />
+                  <p className="text-lg">No history yet</p>
                 </div>
               ) : (
-                <div className="space-y-6">
+                <div className="space-y-8">
                   {history.map((item, idx) => (
-                    <div key={idx} className="border-b border-white/5 pb-4 last:border-0">
-                      <p className="text-slate-500 text-sm mb-1">{item.expression}</p>
-                      <p className="text-2xl font-semibold text-white mb-2">= {item.result}</p>
+                    <div key={idx} className="group border-b border-white/5 pb-6 last:border-0">
+                      <p className="text-slate-500 text-sm mb-2">{item.expression}</p>
+                      <p className="text-3xl font-medium text-white mb-3">= {item.result}</p>
                       {item.explanation && (
-                        <div className="bg-blue-500/10 p-3 rounded-lg border border-blue-500/20">
-                          <p className="text-xs text-blue-300 leading-relaxed italic">
-                            AI: {item.explanation}
+                        <div className="bg-indigo-500/10 p-4 rounded-2xl border border-indigo-500/20">
+                          <p className="text-xs text-indigo-300 leading-relaxed font-medium">
+                            <Sparkles className="inline-block w-3 h-3 mr-1" />
+                            {item.explanation}
                           </p>
                         </div>
                       )}
@@ -190,22 +200,24 @@ const App: React.FC = () => {
                 </div>
               )}
             </div>
-          ) : null}
+          )}
 
-          <div className="text-right mb-2">
-             <span className="text-slate-500 text-lg h-8 block">{expression}</span>
+          <div className="text-right mb-1">
+             <span className="text-slate-500 text-xl font-medium h-8 block tracking-tight">{expression}</span>
           </div>
-          <div className="text-right overflow-hidden">
-            <span className={`block transition-all duration-200 ${display.length > 10 ? 'text-4xl' : display.length > 7 ? 'text-5xl' : 'text-7xl'} font-light whitespace-nowrap overflow-x-auto no-scrollbar`}>
+          <div className="text-right overflow-hidden select-all">
+            <span className={`block transition-all duration-300 ${display.length > 9 ? 'text-5xl' : display.length > 6 ? 'text-6xl' : 'text-[92px]'} font-light whitespace-nowrap overflow-x-auto no-scrollbar tracking-tighter text-white leading-none`}>
               {display}
             </span>
           </div>
 
           {smartExplanation && mode === CalculatorMode.SMART && (
-            <div className="mt-4 p-4 rounded-2xl glass border-blue-500/30 animate-in fade-in zoom-in duration-300">
-              <div className="flex items-start gap-2">
-                <Sparkles className="w-4 h-4 text-blue-400 mt-1 flex-shrink-0" />
-                <p className="text-sm text-slate-300 leading-snug">
+            <div className="mt-6 p-5 rounded-[28px] glass border-indigo-500/20 animate-in fade-in zoom-in duration-500 shadow-2xl">
+              <div className="flex items-start gap-3">
+                <div className="bg-indigo-500 rounded-full p-1 mt-0.5">
+                  <Sparkles className="w-3.5 h-3.5 text-white" />
+                </div>
+                <p className="text-[14px] text-slate-200 leading-snug font-medium">
                   {smartExplanation}
                 </p>
               </div>
@@ -213,70 +225,68 @@ const App: React.FC = () => {
           )}
         </div>
 
-        {/* Interaction Area */}
-        <div className="p-6 pb-10 bg-slate-900/50">
+        {/* Interaction Area (Keyboard) */}
+        <div className="px-6 pt-4 pb-12 bg-black">
           {mode === CalculatorMode.STANDARD ? (
-            <div className="grid grid-cols-4 gap-4">
-              <CalcButton onClick={clearAll} label="AC" variant="secondary" />
-              <CalcButton onClick={() => setDisplay(String(parseFloat(display) * -1))} label="+/-" variant="secondary" />
-              <CalcButton onClick={() => handleOperation('%')} label="%" variant="secondary" />
-              <CalcButton onClick={() => handleOperation('/')} label="÷" variant="action" active={currentOperation === '/'} />
+            <div className="grid grid-cols-4 gap-[14px]">
+              <CalcButton onClick={clearAll} label={display === '0' ? 'AC' : 'C'} variant="modifier" />
+              <CalcButton onClick={() => setDisplay(String(parseFloat(display) * -1))} label="+/-" variant="modifier" />
+              <CalcButton onClick={() => handleOperation('%')} label="%" variant="modifier" />
+              <CalcButton onClick={() => handleOperation('/')} label="÷" variant="operator" active={currentOperation === '/'} />
 
               <CalcButton onClick={() => handleNumber('7')} label="7" />
               <CalcButton onClick={() => handleNumber('8')} label="8" />
               <CalcButton onClick={() => handleNumber('9')} label="9" />
-              <CalcButton onClick={() => handleOperation('*')} label="×" variant="action" active={currentOperation === '*'} />
+              <CalcButton onClick={() => handleOperation('*')} label="×" variant="operator" active={currentOperation === '*'} />
 
               <CalcButton onClick={() => handleNumber('4')} label="4" />
               <CalcButton onClick={() => handleNumber('5')} label="5" />
               <CalcButton onClick={() => handleNumber('6')} label="6" />
-              <CalcButton onClick={() => handleOperation('-')} label="−" variant="action" active={currentOperation === '-'} />
+              <CalcButton onClick={() => handleOperation('-')} label="−" variant="operator" active={currentOperation === '-'} />
 
               <CalcButton onClick={() => handleNumber('1')} label="1" />
               <CalcButton onClick={() => handleNumber('2')} label="2" />
               <CalcButton onClick={() => handleNumber('3')} label="3" />
-              <CalcButton onClick={() => handleOperation('+')} label="+" variant="action" active={currentOperation === '+'} />
+              <CalcButton onClick={() => handleOperation('+')} label="+" variant="operator" active={currentOperation === '+'} />
 
               <CalcButton onClick={() => handleNumber('0')} label="0" colSpan={2} />
               <CalcButton onClick={() => handleNumber('.')} label="." />
-              <CalcButton onClick={handleEqual} label="=" variant="action" />
+              <CalcButton onClick={handleEqual} label="=" variant="operator" />
             </div>
           ) : (
-            <div className="space-y-4 animate-in slide-in-from-bottom duration-300">
-              <div className="relative">
+            <div className="space-y-5 animate-in slide-in-from-bottom-6 duration-500">
+              <div className="relative group">
                 <textarea
                   value={smartPrompt}
                   onChange={(e) => setSmartPrompt(e.target.value)}
-                  placeholder="Ask a math problem (e.g. 'If I have 20 apples and give 3 to each of my 5 friends, how many are left?')"
-                  className="w-full h-40 bg-black/40 border border-white/10 rounded-2xl p-4 text-slate-200 placeholder:text-slate-600 focus:outline-none focus:border-blue-500/50 resize-none text-sm"
+                  placeholder="How can I help you with math?"
+                  className="w-full h-44 bg-[#1c1c1e] border border-white/5 rounded-[30px] p-6 text-white placeholder:text-zinc-600 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 resize-none text-lg tracking-tight font-medium"
                 />
-                <div className="absolute bottom-3 right-3 flex items-center gap-2">
-                  <button 
-                    onClick={() => setSmartPrompt('')}
-                    className="p-2 text-slate-500 hover:text-slate-300 transition-colors"
-                  >
-                    <RefreshCw className="w-4 h-4" />
-                  </button>
-                </div>
+                <button 
+                  onClick={() => setSmartPrompt('')}
+                  className="absolute bottom-5 right-5 p-2.5 bg-zinc-800 text-zinc-400 rounded-full hover:text-white transition-all active:scale-90"
+                >
+                  <RefreshCw className="w-5 h-5" />
+                </button>
               </div>
               <button
                 onClick={handleSmartSolve}
                 disabled={isSolving || !smartPrompt.trim()}
-                className={`w-full py-4 rounded-2xl flex items-center justify-center gap-2 font-semibold transition-all shadow-xl shadow-blue-900/10 ${
+                className={`w-full py-5 rounded-[28px] flex items-center justify-center gap-3 font-bold text-lg transition-all shadow-2xl ${
                   isSolving || !smartPrompt.trim() 
-                  ? 'bg-slate-800 text-slate-500 cursor-not-allowed' 
-                  : 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white hover:scale-[1.02] active:scale-95'
+                  ? 'bg-zinc-800 text-zinc-600 cursor-not-allowed' 
+                  : 'bg-gradient-to-br from-indigo-500 to-purple-600 text-white active:scale-95 btn-active'
                 }`}
               >
                 {isSolving ? (
                   <>
-                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                    <span>Thinking...</span>
+                    <div className="w-5 h-5 border-[3px] border-white/20 border-t-white rounded-full animate-spin"></div>
+                    <span className="tracking-tight">Analyzing Problem...</span>
                   </>
                 ) : (
                   <>
                     <MessageSquare className="w-5 h-5" />
-                    <span>Solve with AI</span>
+                    <span className="tracking-tight">Solve with AI</span>
                   </>
                 )}
               </button>
@@ -285,7 +295,7 @@ const App: React.FC = () => {
         </div>
 
         {/* Home Indicator */}
-        <div className="h-1 w-32 bg-white/20 rounded-full mx-auto mb-2 mt-auto"></div>
+        <div className="absolute bottom-2 left-1/2 -translate-x-1/2 w-[140px] h-1.5 bg-white/40 rounded-full"></div>
       </div>
     </div>
   );
@@ -294,7 +304,7 @@ const App: React.FC = () => {
 interface CalcButtonProps {
   label: string;
   onClick: () => void;
-  variant?: 'primary' | 'secondary' | 'action';
+  variant?: 'number' | 'modifier' | 'operator';
   colSpan?: number;
   active?: boolean;
 }
@@ -302,23 +312,24 @@ interface CalcButtonProps {
 const CalcButton: React.FC<CalcButtonProps> = ({ 
   label, 
   onClick, 
-  variant = 'primary', 
+  variant = 'number', 
   colSpan = 1,
   active = false
 }) => {
-  const baseStyles = "flex items-center justify-center rounded-full text-2xl font-medium transition-all duration-150 h-16 w-16 select-none active:scale-95";
+  const baseStyles = "flex items-center justify-center rounded-full text-[32px] font-medium transition-all duration-100 h-[76px] w-[76px] select-none btn-active";
+  
   const variants = {
-    primary: "bg-slate-800 text-white hover:bg-slate-700",
-    secondary: "bg-slate-400 text-black hover:bg-slate-300",
-    action: `text-white transition-colors duration-200 ${active ? 'bg-white text-orange-500' : 'bg-orange-500 hover:bg-orange-400'}`
+    number: "bg-[#333333] text-white hover:bg-[#4d4d4d]",
+    modifier: "bg-[#a5a5a5] text-black hover:bg-[#d4d4d4]",
+    operator: `${active ? 'bg-white text-[#ff9f0a]' : 'bg-[#ff9f0a] text-white hover:bg-[#ffb347]'} transition-colors duration-200`
   };
 
-  const spanStyles = colSpan > 1 ? `w-auto col-span-${colSpan}` : '';
+  const spanStyles = colSpan > 1 ? `w-auto col-span-${colSpan} px-8 !justify-start` : '';
 
   return (
     <button 
       onClick={onClick}
-      className={`${baseStyles} ${variants[variant]} ${spanStyles} ${colSpan > 1 ? 'aspect-auto px-6 rounded-[32px] w-full' : 'aspect-square'}`}
+      className={`${baseStyles} ${variants[variant]} ${spanStyles} ${colSpan > 1 ? 'rounded-[40px] w-full' : ''}`}
     >
       {label}
     </button>
